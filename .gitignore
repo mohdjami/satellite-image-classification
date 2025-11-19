@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Environment Variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Mac OS
+.DS_Store
+
+# Project Data
+data/outputs/
+# Keep sample images if you want to track them, otherwise uncomment:
+# data/sample_images/
+
+# Logs
+*.log

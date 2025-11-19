@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+streamlit
+openai
+pillow
+numpy
+matplotlib
+rasterio
+python-dotenv
+requests
+python-multipart
