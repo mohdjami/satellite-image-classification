@@ -1,23 +1,29 @@
 # 🛰️ Satellite Image Segmentation System
 
-A powerful AI-powered prototype for classifying land cover in satellite imagery using OpenAI's GPT-4 Vision. This system uses an **Adaptive Tiling** strategy to accurately segment large satellite images into categories like vegetation, water, buildings, roads, and agriculture.
+A powerful AI-powered prototype for classifying land cover in satellite imagery using **SegFormer** (Vision Transformer). This system provides high-precision, pixel-wise segmentation for categories like urban areas, forests, water bodies, and agriculture.
 
 ![Demo](https://via.placeholder.com/800x400?text=Satellite+Image+Segmentation+Demo)
 
 ## ✨ Features
 
--   **AI-Powered Classification**: Uses GPT-4o-mini (Vision) for robust scene understanding.
--   **Adaptive Tiling (Smart Refinement)**: Automatically detects "mixed" tiles (e.g., a river crossing a forest) and recursively splits them into smaller sub-tiles (down to 64px) for high-precision segmentation.
--   **Multi-Resolution Support**: Handles imagery from 0.25m (high res) to 10m (Sentinel-2).
--   **Interactive UI**: Built with Streamlit for easy upload, visualization, and analysis.
--   **FastAPI Backend**: Asynchronous backend for efficient processing.
+-   **State-of-the-Art AI**: Uses **SegFormer (MiT-B0)** fine-tuned on the DeepGlobe Land Cover dataset.
+-   **Pixel-Wise Precision**: Classifies every single pixel, offering far superior detail compared to tile-based methods.
+-   **Real-Time Inference**: Optimized for local execution (CPU/MPS), processing images in seconds without external APIs.
+-   **Interactive Dashboard**: Built with Streamlit for easy upload, visualization, and statistical analysis.
+-   **Auto-Scaling**: Automatically handles images of any resolution by padding and resizing.
+
+## ✅ Completed Objectives
+
+1.  **High-Precision Semantic Segmentation**: Implemented a Vision Transformer (SegFormer) to classify 6 distinct land cover categories with high accuracy.
+2.  **Real-Time Inference System**: Developed a lightweight, local inference pipeline using FastAPI and PyTorch.
+3.  **Interactive Geospatial Dashboard**: Built a user-friendly UI for instant visualization and automated land use statistics.
 
 ## 🛠️ Tech Stack
 
 -   **Frontend**: Streamlit
 -   **Backend**: FastAPI
--   **AI Engine**: OpenAI API (GPT-4o-mini)
--   **Image Processing**: NumPy, PIL, Rasterio
+-   **AI Model**: Hugging Face Transformers (SegFormer)
+-   **Image Processing**: NumPy, PIL, PyTorch
 
 ---
 
@@ -26,7 +32,6 @@ A powerful AI-powered prototype for classifying land cover in satellite imagery 
 ### Prerequisites
 
 -   Python 3.9 or higher
--   An OpenAI API Key (with access to Vision models)
 
 ### 1. Clone the Repository
 
@@ -36,8 +41,6 @@ cd satellite-image-classification
 ```
 
 ### 2. Set Up Virtual Environment
-
-It's recommended to use a virtual environment to manage dependencies.
 
 **macOS/Linux:**
 ```bash
@@ -57,62 +60,49 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-
-1.  Create a `.env` file in the root directory (you can copy the example):
-    ```bash
-    cp .env.example .env
-    ```
-2.  Open `.env` and add your OpenAI API Key:
-    ```env
-    OPENAI_API_KEY=sk-your-api-key-here
-    ```
-
 ---
 
 ## 🏃‍♂️ Running the Application
 
-You need to run both the Backend (API) and the Frontend (UI). It's best to open two terminal windows.
+You need to run both the Backend (API) and the Frontend (UI). Open two terminal windows.
 
 ### Step 1: Start the Backend
 
 In your **first terminal**:
 ```bash
 # Make sure venv is activated
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+source venv/bin/activate
 
 # Run the FastAPI server
 uvicorn backend.main:app --reload
 ```
-*You should see output indicating the server is running at `http://127.0.0.1:8000`.*
+*Server running at `http://127.0.0.1:8000`*
 
 ### Step 2: Start the Frontend
 
 In your **second terminal**:
 ```bash
 # Make sure venv is activated
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+source venv/bin/activate
 
 # Run the Streamlit app
 streamlit run frontend/app.py
 ```
-*This will automatically open your web browser to `http://localhost:8501`.*
+*Browser opens at `http://localhost:8501`*
 
 ---
 
 ## 📖 Usage Guide
 
-1.  **Upload**: Go to the **"Upload & Classify"** tab in the web interface.
-2.  **Configure**:
-    *   **Tile Size**: Choose the starting tile size (default 256). Smaller tiles = more detail but more API calls.
-    *   **Resolution**: Select the approximate resolution of your image (e.g., `0.25m` for high-res Google Earth style, `10m` for Sentinel/Landsat).
-3.  **Classify**: Click the **"🚀 Classify Image"** button.
-    *   *Note*: The system will automatically refine "mixed" areas by splitting them into smaller tiles.
-4.  **Analyze**: Switch to the **"📊 Results"** tab to see:
-    *   **Segmentation Map**: The color-coded classification.
-    *   **Overlay**: The map overlaid on your original image.
-    *   **Statistics**: Percentage breakdown of land cover types.
-5.  **Download**: You can download the raw JSON results for further analysis.
+1.  **Upload**: Go to the **"Upload & Classify"** tab.
+2.  **Classify**: Click **"🚀 Classify Image"**. The system will process the image locally.
+3.  **Analyze**: View the **Segmentation Map** and **Land Cover Statistics** in the Results tab.
+    *   **Urban**: Cyan
+    *   **Agriculture**: Yellow
+    *   **Rangeland**: Magenta
+    *   **Forest**: Green
+    *   **Water**: Blue
+    *   **Barren**: White
 
 ## 📂 Project Structure
 
@@ -120,25 +110,15 @@ streamlit run frontend/app.py
 satellite-segmentation/
 ├── backend/
 │   ├── main.py                 # FastAPI entry point
-│   ├── classifier.py           # OpenAI integration & Adaptive Tiling logic
-│   ├── preprocessing.py        # Image tiling & normalization
-│   ├── reconstruction.py       # Merging tiles & visualization
-│   ├── config.py               # Settings
-│   └── prompts/
-│       └── classification_prompt.py  # System prompts for GPT-4
+│   ├── model.py                # SegFormer model wrapper
+│   ├── classifier.py           # Inference logic
+│   ├── reconstruction.py       # Visualization utilities
+│   └── preprocessing.py        # Image utilities
 ├── frontend/
 │   └── app.py                  # Streamlit User Interface
-├── data/                       # Directory for sample data & outputs
 ├── requirements.txt            # Python dependencies
 └── README.md                   # Documentation
 ```
-
-## ❓ Troubleshooting
-
-*   **`ConnectionError`**: Ensure the backend (`uvicorn`) is running on port 8000.
-*   **`OpenAI Error`**: Check your API key in `.env`. Ensure you have credits/quota available.
-*   **Black Output / 0 Tiles**: This usually happens with very small images. The system now auto-pads them, but try using a larger image if issues persist.
-*   **Slow Processing**: Large images with "Adaptive Tiling" can generate many API calls. Try increasing the "Tile Size" slider or using a smaller image crop.
 
 ## 📄 License
 

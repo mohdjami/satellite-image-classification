@@ -7,9 +7,8 @@ from PIL import Image
 import io
 
 from backend.preprocessing import load_satellite_image, create_tiles, normalize_resolution
-from backend.classifier import classify_all_tiles, encode_image
+from backend.classifier import segment_image
 from backend.reconstruction import reconstruct_segmentation_map, generate_statistics
-from backend.prompts.classification_prompt import SYSTEM_PROMPT, USER_PROMPT
 from backend.config import DEFAULT_TILE_SIZE, MAX_IMAGE_SIZE
 
 app = FastAPI(title="Satellite Image Segmentation API")
@@ -51,34 +50,64 @@ async def classify_image(
             # Downsample very large images for prototype
             image_array = normalize_resolution(image_array, target_size=MAX_IMAGE_SIZE)
         
-        # Create tiles
-        tiles = create_tiles(image_array, tile_size=tile_size)
+        print(f"Processing image of size: {image_array.shape}")
         
-        print(f"Created {len(tiles)} tiles from image")
+        # Segment image
+        mask = segment_image(image_array)
         
-        # Classify tiles
-        # Use a smaller min_tile_size for refinement (e.g., 1/4 of tile_size or fixed 64)
-        min_size = max(64, tile_size // 4)
-        results = await classify_all_tiles(tiles, SYSTEM_PROMPT, USER_PROMPT, min_tile_size=min_size)
-        
-        # Reconstruct segmentation map
-        seg_map = reconstruct_segmentation_map(
-            image_array.shape, 
-            results, 
-            tile_size=tile_size
-        )
+        # Reconstruct segmentation map (colorize)
+        seg_map = reconstruct_segmentation_map(mask)
         
         # Generate statistics
-        stats = generate_statistics(results)
+        # We need to update generate_statistics to work with the mask
+        # For now, let's create a simple stats generator here or update the function
+        unique, counts = np.unique(mask, return_counts=True)
+        total_pixels = mask.size
+        
+        # Map indices to names (matching DeepGlobe)
+        idx_to_name = {
+            0: 'urban',
+            1: 'agriculture',
+            2: 'rangeland',
+            3: 'forest',
+            4: 'water',
+            5: 'barren',
+            6: 'unknown'
+        }
+        
+        stats = {
+            'total_pixels': int(total_pixels),
+            'class_distribution': {}
+        }
+        
+        for idx, count in zip(unique, counts):
+            name = idx_to_name.get(idx, f'class_{idx}')
+            stats['class_distribution'][name] = {
+                'count': int(count),
+                'percentage': round(float(count) / total_pixels * 100, 2)
+            }
         
         # Convert to base64 for response
-        seg_map_b64 = encode_image(seg_map)
+        # We need to import encode_image again or move it to utils
+        # It was in classifier.py, but we removed it.
+        # Let's add it here or in a util file.
+        # For quick fix, I'll add the helper here.
+        from io import BytesIO
+        import base64
+        
+        def encode_img(img_arr):
+            img_pil = Image.fromarray(img_arr)
+            buffered = BytesIO()
+            img_pil.save(buffered, format="PNG")
+            return base64.b64encode(buffered.getvalue()).decode('utf-8')
+            
+        seg_map_b64 = encode_img(seg_map)
         
         return JSONResponse({
             "status": "success",
             "segmentation_map": seg_map_b64,
             "statistics": stats,
-            "tile_results": results[:10]  # Return first 10 for preview
+            "tile_results": [] # No longer used
         })
         
     except Exception as e:

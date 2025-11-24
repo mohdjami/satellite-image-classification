@@ -154,20 +154,28 @@ with tab2:
             labels = list(class_dist.keys())
             sizes = [v['percentage'] for v in class_dist.values()]
             
-            # Map colors
+            # Map colors (DeepGlobe classes)
             color_map = {
-                'vegetation': 'green',
-                'water': 'blue',
-                'buildings': 'gray',
-                'roads': 'black',
-                'agriculture': 'yellow',
-                'barren': 'brown',
-                'unknown': 'white'
+                'urban': '#00FFFF',       # Cyan
+                'agriculture': '#FFFF00', # Yellow
+                'rangeland': '#FF00FF',   # Magenta
+                'forest': '#00FF00',      # Green
+                'water': '#0000FF',       # Blue
+                'barren': '#FFFFFF',      # White
+                'unknown': '#000000'      # Black
             }
-            colors = [color_map.get(l, 'white') for l in labels]
+            colors = [color_map.get(l, '#808080') for l in labels]
             
             fig, ax = plt.subplots()
-            ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors)
+            # Add a background color to seeing white/black clearly
+            fig.patch.set_facecolor('#f0f2f6')
+            
+            wedges, texts, autotexts = ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors)
+            
+            # Make text readable
+            plt.setp(texts, size=8, weight="bold")
+            plt.setp(autotexts, size=8, weight="bold", color="black")
+            
             ax.set_title("Land Cover Distribution")
             st.pyplot(fig)
             
@@ -179,7 +187,7 @@ with tab2:
                     st.metric(
                         label=cls.capitalize(),
                         value=f"{data['percentage']}%",
-                        delta=f"{data['count']} tiles"
+                        delta=f"{data['count']} pixels"
                     )
         
         # Download button
@@ -201,22 +209,21 @@ with tab3:
     ### Technology Stack
     - **Frontend:** Streamlit
     - **Backend:** FastAPI
-    - **AI Model:** OpenAI GPT-4o-mini (Vision)
-    - **Image Processing:** PIL, NumPy, Rasterio
+    - **AI Model:** SegFormer (DeepGlobe Land Cover)
+    - **Image Processing:** PIL, NumPy, Transformers
     
     ### How It Works
     
     1. **Upload:** User uploads satellite image
-    2. **Tiling:** Image split into tiles (default 256x256)
-    3. **Classification:** Each tile analyzed by GPT-4 Vision
-    4. **Reconstruction:** Tiles merged into full segmentation map
-    5. **Visualization:** Results displayed with statistics
+    2. **Preprocessing:** Image resized/padded for model
+    3. **Segmentation:** SegFormer model predicts pixel-wise classes
+    4. **Visualization:** Results displayed with statistics
     
-    ### Supported Categories
-    - Vegetation
-    - Water
-    - Buildings
-    - Roads
-    - Agriculture
-    - Barren Land
+    ### Supported Categories (DeepGlobe)
+    - Urban (Cyan)
+    - Agriculture (Yellow)
+    - Rangeland (Magenta)
+    - Forest (Green)
+    - Water (Blue)
+    - Barren (White)
     """)

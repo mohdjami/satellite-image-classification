@@ -13,37 +13,54 @@ CLASS_COLORS = {
     'unknown': [255, 255, 255]      # White
 }
 
-def reconstruct_segmentation_map(original_shape, tile_results, tile_size=256):
+def reconstruct_segmentation_map(mask):
     """
-    Reconstruct full segmentation map from tile classifications
+    Convert segmentation mask to RGB image
     
     Args:
-        original_shape: (H, W) of original image
-        tile_results: List of classification results with positions
-        tile_size: Size of each tile
+        mask: numpy array (H, W) with class indices
     
     Returns:
         segmentation_map: RGB image (H, W, 3)
     """
-    h, w = original_shape[:2]
+    h, w = mask.shape
     seg_map = np.zeros((h, w, 3), dtype=np.uint8)
     
-    for result in tile_results:
-        class_name = result.get('class', 'unknown').lower()
-        # Handle case sensitivity or slight variations if needed
-        if class_name not in CLASS_COLORS:
-            class_name = 'unknown'
-            
-        pos = result['position']
-        i1, j1, i2, j2 = pos
-        
-        color = CLASS_COLORS.get(class_name, CLASS_COLORS['unknown'])
-        
-        # Fill the tile area with the color
-        # Note: This simple version fills the whole tile with one color.
-        # A more advanced version would be pixel-wise if the model supported it.
-        # For now, we are doing tile-based classification.
-        seg_map[i1:i2, j1:j2] = color
+    # Map indices to colors
+    # We need to ensure the model's class indices match these keys
+    # Assuming model classes are:
+    # 0: vegetation
+    # 1: water
+    # 2: buildings
+    # 3: roads
+    # 4: agriculture
+    # 5: barren
+    # 6: unknown (or background)
+    
+    # Create a lookup table for faster coloring
+    # This is a simple way; for very large images, vectorization is better
+    
+    # DeepGlobe Land Cover Classes:
+    # 0: Urban
+    # 1: Agriculture
+    # 2: Rangeland
+    # 3: Forest
+    # 4: Water
+    # 5: Barren
+    # 6: Unknown
+    
+    idx_to_color = {
+        0: [0, 255, 255],      # Urban (Cyan)
+        1: [255, 255, 0],      # Agriculture (Yellow)
+        2: [255, 0, 255],      # Rangeland (Magenta)
+        3: [0, 255, 0],        # Forest (Green)
+        4: [0, 0, 255],        # Water (Blue)
+        5: [255, 255, 255],    # Barren (White)
+        6: [0, 0, 0]           # Unknown (Black)
+    }
+    
+    for idx, color in idx_to_color.items():
+        seg_map[mask == idx] = color
     
     return seg_map
 
